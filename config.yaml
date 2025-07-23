@@ -1,0 +1,423 @@
+# BEACON Configuration File
+# Blockchain Edge-based Anomaly detection with Consensus Over Networks
+# IEEE INFOCOM 2026 Submission
+# 
+# This configuration file contains all hyperparameters for model architecture,
+# network protocols, distributed training, and hardware-specific optimizations
+# for systems with 4x RTX 3090 GPUs, 64 CPU cores, and 384GB RAM
+
+# General Configuration
+general:
+  project_name: "BEACON"
+  experiment_name: "infocom_2026_submission"
+  random_seed: 42
+  reproducible: true
+  debug_mode: false
+  version: "1.0.0"
+
+# Hardware Configuration
+hardware:
+  # GPU Configuration for 4x RTX 3090 (24GB each)
+  gpu:
+    num_gpus: 4
+    device_ids: [0, 1, 2, 3]
+    memory_per_gpu: 24  # GB
+    mixed_precision: true
+    tf32_mode: true  # RTX 3090 optimization
+    cuda_graphs: true  # Enable CUDA graphs for RTX 3090
+    memory_fraction: 0.95  # Use 95% of GPU memory
+    
+  # CPU Configuration for Intel Xeon Silver 4314 (64 cores)
+  cpu:
+    num_cores: 64
+    num_workers_dataloader: 32  # Half of CPU cores for data loading
+    num_workers_preprocessing: 16
+    thread_pool_size: 16
+    process_pool_size: 32
+    cpu_affinity: true  # Pin processes to specific cores
+    
+  # Memory Configuration for 384GB RAM
+  memory:
+    total_ram: 384  # GB
+    cache_size_gb: 100  # Dedicated cache size
+    buffer_size_gb: 50  # I/O buffer size
+    memory_pool_size_gb: 200  # Memory pool for large tensors
+    swap_usage: false  # Disable swap for performance
+
+# Model Architecture Configuration
+model:
+  # Core model parameters - Enhanced for large-scale blockchain
+  input_dim: 8  # Transaction attribute dimensions
+  hidden_dim: 256  # Increased for better representation
+  output_dim: 2  # Binary classification
+  num_layers: 3  # Deeper for complex patterns
+  dropout: 0.2
+  activation: "gelu"  # Better for transformer-like architectures
+  
+  # Distributed Edge2Seq parameters
+  edge2seq:
+    max_sequence_length: 64  # Increased for longer transaction histories
+    gru_layers: 2
+    bidirectional: true
+    edge_compression_ratio: 0.5
+    adaptive_processing: true
+    attention_heads: 8  # Increased attention heads
+    temporal_encoding: true
+    positional_encoding: "learned"  # Options: sinusoidal, learned, rotary
+    
+  # Network-Aware MGD parameters
+  mgd:
+    num_heads: 8  # Increased for better multi-head attention
+    concat_heads: true
+    negative_slope: 0.2
+    edge_dim: 16  # Increased edge feature dimension
+    add_self_loops: true
+    normalize: true
+    residual_connections: true
+    layer_norm: true
+    
+  # Enhanced Consensus Aggregation parameters
+  consensus:
+    num_edge_nodes: 100
+    byzantine_tolerance: 0.33  # Standard Byzantine tolerance
+    aggregation_strategies:  # Multiple strategies for comparison
+      primary: "byzantine_robust"
+      alternatives: ["fedavg", "krum", "trimmed_mean", "median", "bulyan"]
+    consensus_rounds: 5
+    verification_threshold: 0.66
+    trust_decay: 0.1
+    reputation_system: true
+    
+  # Cross-chain parameters
+  cross_chain:
+    enabled: true
+    supported_chains: ["ethereum", "bitcoin", "binance", "polygon"]
+    bridge_detection: true
+    atomic_swap_detection: true
+
+# Network Protocol Configuration
+network_protocols:
+  # Enhanced Adaptive Transaction Routing
+  routing:
+    confidence_threshold: 0.8
+    verification_threshold: 0.6
+    max_path_length: 5
+    routing_strategy: "adaptive"  # Dynamically switches between strategies
+    strategies_available: ["shortest", "load_balanced", "security_first", "latency_optimized", "energy_efficient"]
+    cache_routing_decisions: true
+    routing_cache_size: 50000  # Increased cache
+    qos_levels: ["best_effort", "guaranteed", "priority"]
+    
+  # Realistic Network topology
+  topology:
+    type: "hierarchical_blockchain"  # More realistic for blockchain networks
+    num_edge_nodes: 1000
+    num_validator_nodes: 100
+    num_gateway_nodes: 10
+    connectivity_model: "preferential_attachment"
+    churn_rate: 0.1  # Node join/leave rate
+    
+  # Enhanced Network conditions simulation
+  network_simulation:
+    # Latency modeling (ms)
+    latency:
+      base: 10.0
+      variance: 5.0
+      distribution: "lognormal"  # More realistic than normal
+      percentiles: [50, 90, 95, 99]  # Track tail latencies
+      
+    # Bandwidth modeling (Mbps)
+    bandwidth:
+      edge_device: [1, 100]
+      backbone: [100, 10000]
+      congestion_model: "tcp_cubic"
+      
+    # Packet loss and reordering
+    packet_loss:
+      range: [0.0, 0.05]
+      burst_loss_probability: 0.01
+      
+    packet_reordering:
+      probability: 0.001
+      max_displacement: 3
+      
+    # Jitter (ms)
+    jitter:
+      mean: 2.0
+      std: 1.0
+      
+  # Enhanced Streaming detection
+  streaming:
+    enabled: true
+    window_size: 2000  # Increased window
+    slide_size: 100
+    update_strategy: "incremental"  # Options: batch, incremental, hybrid
+    latency_sla: 50.0  # Service level agreement in ms
+    throughput_sla: 10000  # Transactions per second
+    backpressure_handling: true
+    
+  # Realistic Cross-chain communication
+  cross_chain:
+    ethereum:
+      rpc_endpoints: ["https://mainnet.infura.io/v3/YOUR_KEY", "https://eth.llamarpc.com"]
+      polling_interval: 12.0  # One block time
+      confirmation_blocks: 12
+      gas_price_strategy: "fast"
+      
+    bitcoin:
+      rpc_endpoints: ["https://btc.getblock.io/YOUR_KEY", "https://bitcoin.blockdaemon.com"]
+      polling_interval: 600.0  # 10 minutes block time
+      confirmation_blocks: 6
+      fee_estimation: "economical"
+      
+    synchronization:
+      strategy: "eventual_consistency"
+      max_chain_delay: 3600.0  # 1 hour
+      consensus_timeout: 30.0
+      
+  # Byzantine attack simulation
+  byzantine_attacks:
+    enabled: true
+    attack_types: ["data_poisoning", "model_poisoning", "sybil", "eclipse", "delay"]
+    attack_probability: 0.1
+    defense_mechanisms: ["outlier_detection", "reputation", "proof_of_stake", "trusted_execution"]
+
+# Enhanced Distributed Training Configuration
+distributed:
+  # Distribution strategy
+  backend: "nccl"  # Optimized for NVIDIA GPUs
+  master_addr: "localhost"
+  master_port: 29500
+  init_method: "env://"
+  
+  # Advanced parallelism strategies
+  data_parallel: true
+  model_parallel: false
+  pipeline_parallel: false
+  tensor_parallel: false  # For very large models
+  
+  # Gradient synchronization
+  gradient_accumulation_steps: 4
+  gradient_compression: true
+  compression_algorithm: "topk"  # More aggressive than powersgd
+  compression_ratio: 0.01  # Top 1% gradients
+  error_feedback: true  # Accumulate compression errors
+  all_reduce_algorithm: "ring"  # Ring all-reduce for 4 GPUs
+  
+  # Enhanced optimizer settings
+  optimizer:
+    type: "adamw"
+    learning_rate: 0.001
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+    eps: 1e-8
+    amsgrad: false
+    gradient_clipping: 1.0
+    
+  # Advanced scheduler
+  scheduler:
+    type: "cosine_restarts"
+    warmup_epochs: 5
+    warmup_lr: 0.0001
+    min_lr: 0.000001
+    T_0: 10
+    T_mult: 2
+    eta_min: 1e-7
+
+# Enhanced Federated Learning Configuration
+federated_learning:
+  enabled: true
+  
+  # Heterogeneous edge devices
+  edge_device_profiles:
+    - name: "high_end"
+      count: 20
+      memory_gb: 16
+      compute_capability: 1.0
+      bandwidth_mbps: 100
+      battery_powered: false
+      
+    - name: "medium"
+      count: 50
+      memory_gb: 8
+      compute_capability: 0.5
+      bandwidth_mbps: 50
+      battery_powered: true
+      
+    - name: "low_end"
+      count: 30
+      memory_gb: 4
+      compute_capability: 0.2
+      bandwidth_mbps: 10
+      battery_powered: true
+      
+  # Energy-aware training
+  energy_optimization:
+    enabled: true
+    max_energy_per_round: 1000  # Joules
+    device_energy_models:
+      computation: 0.1  # Joules per GFLOP
+      communication: 0.01  # Joules per MB
+      idle: 0.001  # Joules per second
+      
+  # Advanced aggregation
+  secure_aggregation:
+    enabled: true
+    protocol: "secure_multiparty"  # Options: secure_multiparty, homomorphic, trusted_aggregator
+    privacy_budget: 10.0
+    noise_multiplier: 1.0
+
+# Enhanced Training Configuration
+training:
+  # Basic training parameters
+  num_epochs: 100
+  batch_size: 128  # Per GPU batch size
+  effective_batch_size: 512  # Total batch size across GPUs
+  
+  # Multi-objective optimization
+  multi_objective:
+    enabled: true
+    objectives:
+      - name: "accuracy"
+        weight: 0.4
+      - name: "latency"
+        weight: 0.3
+      - name: "energy_efficiency"
+        weight: 0.2
+      - name: "communication_cost"
+        weight: 0.1
+        
+  # Advanced loss configuration
+  loss:
+    primary: "focal_loss"  # Better for imbalanced data
+    alpha: 0.25
+    gamma: 2.0
+    auxiliary_losses:
+      - type: "contrastive"
+        weight: 0.1
+      - type: "reconstruction"
+        weight: 0.05
+
+# Enhanced Data Configuration
+data:
+  # All 4 datasets
+  datasets:
+    ethereum_small:
+      path: "./ethereum_s.pt"
+      type: "ethereum"
+      num_nodes: 1329729
+      num_edges: 6794521
+      
+    ethereum_phishing:
+      path: "./ethereum_p.pt"
+      type: "ethereum"
+      num_nodes: 2973489
+      num_edges: 13551303
+      
+    bitcoin_medium:
+      path: "./bitcoin_m.pt"
+      type: "bitcoin"
+      num_nodes: 2505841
+      num_edges: 14181316
+      
+    bitcoin_large:
+      path: "./bitcoin_l.pt"
+      type: "bitcoin"
+      num_nodes: 20085231
+      num_edges: 203419765
+      
+  # Advanced preprocessing
+  preprocessing:
+    normalize_features: true
+    scale_method: "robust"  # Better for outliers
+    handle_missing: "knn_impute"
+    remove_outliers: true
+    outlier_method: "isolation_forest"
+    feature_engineering:
+      enabled: true
+      compute_graph_features: true
+      compute_temporal_features: true
+
+# Enhanced Experimental Configuration
+experiments:
+  # Comprehensive experiment suite
+  experiment_suite:
+    - name: "distributed_scalability"
+      description: "Test scalability across different GPU/CPU configurations"
+      
+    - name: "network_resilience"
+      description: "Evaluate performance under various network conditions"
+      
+    - name: "byzantine_robustness"
+      description: "Test against different Byzantine attack scenarios"
+      
+    - name: "cross_chain_efficiency"
+      description: "Evaluate cross-chain detection capabilities"
+      
+    - name: "energy_efficiency"
+      description: "Measure energy consumption across edge devices"
+      
+    - name: "real_time_streaming"
+      description: "Test streaming detection latency and throughput"
+      
+  # Statistical significance testing
+  statistical_testing:
+    num_runs: 10
+    confidence_level: 0.95
+    statistical_tests: ["t_test", "wilcoxon", "friedman"]
+
+# Enhanced Evaluation Configuration
+evaluation:
+  # Comprehensive metrics
+  metrics:
+    # ML metrics
+    ml_metrics: ["accuracy", "precision", "recall", "f1_score", "auc", "ap", "mcc"]
+    
+    # Network metrics
+    network_metrics: ["throughput", "latency_p50", "latency_p95", "latency_p99", 
+                     "jitter", "packet_loss", "bandwidth_utilization"]
+    
+    # Distributed system metrics
+    system_metrics: ["consensus_time", "communication_overhead", "synchronization_delay",
+                    "fault_tolerance", "scalability_factor"]
+    
+    # Blockchain-specific metrics
+    blockchain_metrics: ["detection_delay", "false_positive_cost", "cross_chain_accuracy",
+                        "gas_efficiency", "finality_time"]
+    
+    # Energy metrics
+    energy_metrics: ["energy_per_transaction", "carbon_footprint", "battery_life"]
+
+# Advanced Configuration
+advanced:
+  # Blockchain integration
+  blockchain_integration:
+    transaction_monitoring: true
+    smart_contract_interaction: true
+    gas_optimization: true
+    mempool_analysis: true
+    
+  # Attack simulation
+  attack_simulation:
+    wash_trading: true
+    pump_and_dump: true
+    rug_pull: true
+    sandwich_attacks: true
+    
+  # Regulatory compliance
+  compliance:
+    gdpr_compliant: true
+    data_retention_days: 30
+    right_to_erasure: true
+
+# Environment Variables
+environment:
+  OMP_NUM_THREADS: 64
+  MKL_NUM_THREADS: 64
+  CUDA_VISIBLE_DEVICES: "0,1,2,3"
+  PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
+  NCCL_DEBUG: "WARN"
+  NCCL_SOCKET_IFNAME: "eth0"
+  TORCH_DISTRIBUTED_DEBUG: "OFF"
+  CUDA_LAUNCH_BLOCKING: 0
+  PYTORCH_ENABLE_MPS_FALLBACK: 1
