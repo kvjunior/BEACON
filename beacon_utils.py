@@ -1,7 +1,6 @@
 """
 BEACON Utilities Module
 Efficient data loading, network simulation, performance metrics, and streaming preprocessing
-IEEE INFOCOM 2026 Submission
 """
 
 import torch
