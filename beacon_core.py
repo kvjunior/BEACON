@@ -1,7 +1,6 @@
 """
 BEACON Core Neural Network Architecture
 Distributed Edge2Seq, Network-Aware MGD, and Consensus Aggregation Modules
-IEEE INFOCOM 2026 Submission
 """
 
 import torch
