@@ -1,21 +1,57 @@
 # BEACON Configuration File
 # Blockchain Edge-based Anomaly detection with Consensus Over Networks
-# IEEE INFOCOM 2026 Submission
+# ACM CCS 2026 Submission
 # 
 # This configuration file contains all hyperparameters for model architecture,
 # network protocols, distributed training, and hardware-specific optimizations
 # for systems with 4x RTX 3090 GPUs, 64 CPU cores, and 384GB RAM
 
+# ============================================================================
 # General Configuration
+# ============================================================================
 general:
   project_name: "BEACON"
-  experiment_name: "infocom_2026_submission"
+  experiment_name: "ccs_2026_submission"
   random_seed: 42
   reproducible: true
   debug_mode: false
-  version: "1.0.0"
+  version: "2.0.0"
 
+# ============================================================================
+# Paths Configuration (Required by beacon_main.py)
+# ============================================================================
+paths:
+  # Data directories
+  data_dir: "./data"
+  raw_data_dir: "./data/raw"
+  processed_data_dir: "./data/processed"
+  
+  # Output directories
+  output_dir: "./outputs"
+  results_dir: "./outputs/results"
+  figures_dir: "./outputs/figures"
+  
+  # Model and training directories
+  checkpoint_dir: "./checkpoints"
+  best_model_dir: "./checkpoints/best"
+  
+  # Logging directories
+  log_dir: "./logs"
+  tensorboard_dir: "./tensorboard"
+  
+  # Experiment directories
+  experiment_dir: "./experiments"
+  ablation_dir: "./experiments/ablation"
+  baseline_dir: "./experiments/baselines"
+  
+  # Artifact directories (for CCS Open Science compliance)
+  artifacts_dir: "./artifacts"
+  pretrained_models_dir: "./artifacts/pretrained"
+  validation_subsets_dir: "./artifacts/validation_data"
+
+# ============================================================================
 # Hardware Configuration
+# ============================================================================
 hardware:
   # GPU Configuration for 4x RTX 3090 (24GB each)
   gpu:
@@ -44,13 +80,16 @@ hardware:
     memory_pool_size_gb: 200  # Memory pool for large tensors
     swap_usage: false  # Disable swap for performance
 
+# ============================================================================
 # Model Architecture Configuration
+# ============================================================================
 model:
   # Core model parameters - Enhanced for large-scale blockchain
   input_dim: 8  # Transaction attribute dimensions
   hidden_dim: 256  # Increased for better representation
   output_dim: 2  # Binary classification
   num_layers: 3  # Deeper for complex patterns
+  num_edge_nodes: 100  # Number of edge nodes for distributed processing
   dropout: 0.2
   activation: "gelu"  # Better for transformer-like architectures
   
@@ -64,8 +103,11 @@ model:
     attention_heads: 8  # Increased attention heads
     temporal_encoding: true
     positional_encoding: "learned"  # Options: sinusoidal, learned, rotary
+    quantization_bits: 8  # For edge deployment compression
+    pruning_threshold: 0.01
     
-  # Network-Aware MGD parameters
+  # Network-Aware MGD (Multigraph Discrepancy) parameters
+  # Based on Graph Attention Networks (Veličković et al., 2018)
   mgd:
     num_heads: 8  # Increased for better multi-head attention
     concat_heads: true
@@ -75,18 +117,21 @@ model:
     normalize: true
     residual_connections: true
     layer_norm: true
+    network_aware: true  # Enable network-aware attention modulation
+    routing_enabled: true  # Enable transaction routing
     
   # Enhanced Consensus Aggregation parameters
   consensus:
     num_edge_nodes: 100
-    byzantine_tolerance: 0.33  # Standard Byzantine tolerance
+    byzantine_tolerance: 0.33  # Standard Byzantine tolerance (f < n/3)
     aggregation_strategies:  # Multiple strategies for comparison
       primary: "byzantine_robust"
-      alternatives: ["fedavg", "krum", "trimmed_mean", "median", "bulyan"]
+      alternatives: ["fedavg", "krum", "trimmed_mean", "median", "bulyan", "multi_krum", "coordinate_median"]
     consensus_rounds: 5
     verification_threshold: 0.66
     trust_decay: 0.1
     reputation_system: true
+    incentive_enabled: true
     
   # Cross-chain parameters
   cross_chain:
@@ -94,8 +139,18 @@ model:
     supported_chains: ["ethereum", "bitcoin", "binance", "polygon"]
     bridge_detection: true
     atomic_swap_detection: true
+    num_chains: 4
+    
+  # Edge deployment parameters
+  edge_deployment:
+    enabled: true
+    compression_ratio: 0.5
+    quantization_bits: 8
+    max_model_size_mb: 50
 
+# ============================================================================
 # Network Protocol Configuration
+# ============================================================================
 network_protocols:
   # Enhanced Adaptive Transaction Routing
   routing:
@@ -107,6 +162,7 @@ network_protocols:
     cache_routing_decisions: true
     routing_cache_size: 50000  # Increased cache
     qos_levels: ["best_effort", "guaranteed", "priority"]
+    num_routes: 3  # Normal, verification, high-priority
     
   # Realistic Network topology
   topology:
@@ -131,6 +187,7 @@ network_protocols:
       edge_device: [1, 100]
       backbone: [100, 10000]
       congestion_model: "tcp_cubic"
+      base_bandwidth: 100.0
       
     # Packet loss and reordering
     packet_loss:
@@ -155,6 +212,8 @@ network_protocols:
     latency_sla: 50.0  # Service level agreement in ms
     throughput_sla: 10000  # Transactions per second
     backpressure_handling: true
+    update_frequency: 10
+    anomaly_threshold: 0.7
     
   # Realistic Cross-chain communication
   cross_chain:
@@ -163,26 +222,61 @@ network_protocols:
       polling_interval: 12.0  # One block time
       confirmation_blocks: 12
       gas_price_strategy: "fast"
+      consensus_mechanism: "PoS"
       
     bitcoin:
       rpc_endpoints: ["https://btc.getblock.io/YOUR_KEY", "https://bitcoin.blockdaemon.com"]
       polling_interval: 600.0  # 10 minutes block time
       confirmation_blocks: 6
       fee_estimation: "economical"
+      consensus_mechanism: "PoW"
+      
+    binance:
+      rpc_endpoints: ["https://bsc-dataseed.binance.org/"]
+      polling_interval: 3.0  # 3 second block time
+      confirmation_blocks: 15
+      consensus_mechanism: "PoSA"
+      
+    polygon:
+      rpc_endpoints: ["https://polygon-rpc.com/"]
+      polling_interval: 2.0  # 2 second block time
+      confirmation_blocks: 256
+      consensus_mechanism: "PoS"
       
     synchronization:
       strategy: "eventual_consistency"
       max_chain_delay: 3600.0  # 1 hour
       consensus_timeout: 30.0
+      sync_interval: 60
       
-  # Byzantine attack simulation
+    supported_chains: ["ethereum", "bitcoin", "binance", "polygon"]
+      
+  # Byzantine attack simulation (Threat Model Implementation)
   byzantine_attacks:
     enabled: true
     attack_types: ["data_poisoning", "model_poisoning", "sybil", "eclipse", "delay"]
     attack_probability: 0.1
     defense_mechanisms: ["outlier_detection", "reputation", "proof_of_stake", "trusted_execution"]
+    # Detailed attack parameters for CCS threat model
+    model_poisoning:
+      gradient_manipulation_factor: 10.0
+      targeted: false
+    data_poisoning:
+      label_flip_rate: 0.3
+      feature_noise_std: 0.5
+    sybil:
+      max_fake_identities: 10
+      identity_cost: 0.1
+    eclipse:
+      isolation_probability: 0.2
+      max_isolated_nodes: 5
+    delay:
+      max_delay_ms: 5000
+      selective_delay: true
 
-# Enhanced Distributed Training Configuration
+# ============================================================================
+# Distributed Training Configuration
+# ============================================================================
 distributed:
   # Distribution strategy
   backend: "nccl"  # Optimized for NVIDIA GPUs
@@ -224,9 +318,14 @@ distributed:
     T_mult: 2
     eta_min: 1e-7
 
-# Enhanced Federated Learning Configuration
+# ============================================================================
+# Federated Learning Configuration
+# ============================================================================
 federated_learning:
   enabled: true
+  num_edge_nodes: 100
+  update_frequency: 10
+  simulate_edge_nodes: true
   
   # Heterogeneous edge devices
   edge_device_profiles:
@@ -251,6 +350,13 @@ federated_learning:
       bandwidth_mbps: 10
       battery_powered: true
       
+  # Byzantine tolerance settings
+  byzantine_tolerance: 0.33
+  aggregation_strategy: "BYZANTINE_ROBUST"
+  consensus_rounds: 3
+  verification_threshold: 0.8
+  incentive_enabled: true
+      
   # Energy-aware training
   energy_optimization:
     enabled: true
@@ -267,12 +373,29 @@ federated_learning:
     privacy_budget: 10.0
     noise_multiplier: 1.0
 
-# Enhanced Training Configuration
+# ============================================================================
+# Training Configuration
+# ============================================================================
 training:
   # Basic training parameters
   num_epochs: 100
   batch_size: 128  # Per GPU batch size
   effective_batch_size: 512  # Total batch size across GPUs
+  learning_rate: 0.001
+  weight_decay: 0.01
+  
+  # Optimizer settings
+  optimizer: "adamw"
+  betas: [0.9, 0.999]
+  
+  # Scheduler settings
+  scheduler: "cosine"
+  min_lr: 0.000001
+  step_size: 10
+  gamma: 0.1
+  
+  # Mixed precision
+  mixed_precision: true
   
   # Multi-objective optimization
   multi_objective:
@@ -298,33 +421,66 @@ training:
       - type: "reconstruction"
         weight: 0.05
 
-# Enhanced Data Configuration
+# ============================================================================
+# Data Configuration
+# ============================================================================
 data:
-  # All 4 datasets
+  # Data loading settings
+  data_path: "./data"
+  batch_size: 128
+  num_workers: 32
+  cache_size_gb: 100
+  prefetch_batches: 10
+  streaming_mode: false
+  
+  # All 4 datasets with detailed statistics
   datasets:
     ethereum_small:
-      path: "./ethereum_s.pt"
+      path: "./data/ethereum_s.pt"
       type: "ethereum"
-      num_nodes: 1329729
-      num_edges: 6794521
+      num_nodes: 1329729      # Addresses
+      num_edges: 6794521      # Transactions
+      num_labeled: 150000
+      illicit_rate: 0.042
+      description: "Ethereum small-scale dataset"
       
     ethereum_phishing:
-      path: "./ethereum_p.pt"
+      path: "./data/ethereum_p.pt"
       type: "ethereum"
-      num_nodes: 2973489
-      num_edges: 13551303
+      num_nodes: 2973489      # Addresses
+      num_edges: 13551303     # Transactions
+      num_labeled: 420000
+      illicit_rate: 0.051
+      description: "Ethereum phishing detection dataset"
       
     bitcoin_medium:
-      path: "./bitcoin_m.pt"
+      path: "./data/bitcoin_m.pt"
       type: "bitcoin"
-      num_nodes: 2505841
-      num_edges: 14181316
+      num_nodes: 2505841      # Addresses
+      num_edges: 14181316     # Transactions
+      num_labeled: 680000
+      illicit_rate: 0.038
+      description: "Bitcoin medium-scale dataset"
       
     bitcoin_large:
-      path: "./bitcoin_l.pt"
+      path: "./data/bitcoin_l.pt"
       type: "bitcoin"
-      num_nodes: 20085231
-      num_edges: 203419765
+      num_nodes: 20085231     # Addresses
+      num_edges: 203419765    # Transactions
+      num_labeled: 1200000
+      illicit_rate: 0.029
+      description: "Bitcoin large-scale dataset"
+      
+  # Data sources (for CCS Ethical Considerations)
+  data_sources:
+    etherscan:
+      url: "https://etherscan.io/labelcloud"
+      description: "Ethereum labeled addresses from Etherscan"
+      license: "Public domain - blockchain data"
+    walletexplorer:
+      url: "https://www.walletexplorer.com/"
+      description: "Bitcoin wallet clustering and labels"
+      license: "Public domain - blockchain data"
       
   # Advanced preprocessing
   preprocessing:
@@ -338,7 +494,14 @@ data:
       compute_graph_features: true
       compute_temporal_features: true
 
-# Enhanced Experimental Configuration
+# ============================================================================
+# Experiment Configuration
+# ============================================================================
+experiment:
+  name: "beacon_ccs_2026"
+  seed: 42
+  deterministic: true
+
 experiments:
   # Comprehensive experiment suite
   experiment_suite:
@@ -360,13 +523,25 @@ experiments:
     - name: "real_time_streaming"
       description: "Test streaming detection latency and throughput"
       
+    - name: "baseline_comparison"
+      description: "Compare against baseline methods on all datasets"
+      
+    - name: "scalability_stress_test"
+      description: "Test system limits with increasing node counts"
+      
+    - name: "cross_chain_pairwise"
+      description: "Test all chain pairs with different consensus mechanisms"
+      
   # Statistical significance testing
   statistical_testing:
     num_runs: 10
     confidence_level: 0.95
     statistical_tests: ["t_test", "wilcoxon", "friedman"]
+    bonferroni_correction: true
 
-# Enhanced Evaluation Configuration
+# ============================================================================
+# Evaluation Configuration
+# ============================================================================
 evaluation:
   # Comprehensive metrics
   metrics:
@@ -388,7 +563,9 @@ evaluation:
     # Energy metrics
     energy_metrics: ["energy_per_transaction", "carbon_footprint", "battery_life"]
 
+# ============================================================================
 # Advanced Configuration
+# ============================================================================
 advanced:
   # Blockchain integration
   blockchain_integration:
@@ -397,7 +574,7 @@ advanced:
     gas_optimization: true
     mempool_analysis: true
     
-  # Attack simulation
+  # Attack simulation (for threat model validation)
   attack_simulation:
     wash_trading: true
     pump_and_dump: true
@@ -410,7 +587,75 @@ advanced:
     data_retention_days: 30
     right_to_erasure: true
 
+# ============================================================================
+# Baseline Methods Configuration (NEW for CCS - addresses reviewer feedback)
+# ============================================================================
+baselines:
+  # Vanilla GAT baseline
+  vanilla_gat:
+    enabled: true
+    num_heads: 8
+    hidden_dim: 256
+    num_layers: 3
+    dropout: 0.2
+    
+  # FedAvg baseline (no Byzantine robustness)
+  fedavg:
+    enabled: true
+    num_rounds: 100
+    local_epochs: 5
+    
+  # Krum-only aggregation
+  krum_only:
+    enabled: true
+    num_byzantine: 33  # 33% assumed Byzantine
+    
+  # Single-chain baseline (no cross-chain)
+  single_chain:
+    enabled: true
+    
+  # Comparison methods from literature
+  literature_baselines:
+    - name: "voronov_sketch"
+      paper: "Voronov et al. 2024"
+      reported_f1: 0.873
+      reported_latency_ms: 340
+      
+    - name: "song_gnn"
+      paper: "Song et al. 2025"
+      reported_f1: 0.912
+      reported_latency_ms: 180
+      
+    - name: "tharani_unified"
+      paper: "Tharani et al. 2024"
+      reported_f1: 0.897
+      reported_latency_ms: 220
+      
+    - name: "chen_fedgpa"
+      paper: "Chen et al. 2025"
+      reported_f1: 0.884
+      reported_latency_ms: 280
+
+# ============================================================================
+# Scalability Testing Configuration (NEW for CCS - addresses reviewer feedback)
+# ============================================================================
+scalability:
+  # Node count stress testing
+  stress_test:
+    node_counts: [100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000]
+    timeout_seconds: 300
+    max_consensus_time_seconds: 5.0
+    min_accuracy_threshold: 0.90
+    
+  # Practical deployment limits
+  deployment_limits:
+    max_nodes_per_coordinator: 1500
+    recommended_nodes: 1000
+    horizontal_scaling_enabled: true
+
+# ============================================================================
 # Environment Variables
+# ============================================================================
 environment:
   OMP_NUM_THREADS: 64
   MKL_NUM_THREADS: 64
@@ -421,3 +666,42 @@ environment:
   TORCH_DISTRIBUTED_DEBUG: "OFF"
   CUDA_LAUNCH_BLOCKING: 0
   PYTORCH_ENABLE_MPS_FALLBACK: 1
+
+# ============================================================================
+# CCS 2026 Specific Configuration
+# ============================================================================
+ccs_2026:
+  # Track information
+  track: "Blockchain and Distributed Systems"
+  track_chairs: "Kartik Nayak (Duke University)"
+  track_email: "ccs26-distributed-track@acm.org"
+  
+  # Submission cycle
+  submission_cycle: 1  # First cycle (January 2026)
+  abstract_deadline: "2026-01-07"
+  paper_deadline: "2026-01-14"
+  
+  # Open Science compliance
+  open_science:
+    anonymous_url: "https://anonymous.4open.science/r/BEACON-CCS2026/"
+    artifacts_provided: true
+    validation_subset_provided: true
+    pretrained_models_provided: true
+    
+  # Artifact checklist
+  artifacts:
+    - name: "source_code"
+      path: "beacon_*.py"
+      provided: true
+    - name: "configuration"
+      path: "config.yaml"
+      provided: true
+    - name: "validation_data"
+      path: "data/*_sample.pt"
+      provided: true
+    - name: "pretrained_models"
+      path: "checkpoints/*.pt"
+      provided: true
+    - name: "reproduction_scripts"
+      path: "scripts/*.sh"
+      provided: true
