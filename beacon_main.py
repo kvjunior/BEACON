@@ -1,7 +1,6 @@
 """
 BEACON: Blockchain Edge-based Anomaly detection with Consensus Over Networks
 Main Entry Point and Orchestration Module
-IEEE INFOCOM 2026 Submission
 """
 
 import os
