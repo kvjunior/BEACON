@@ -1,7 +1,6 @@
 """
 BEACON Networking Protocols Module
 Adaptive Transaction Routing, Cross-Chain Communication, and Streaming Detection
-IEEE INFOCOM 2026 Submission
 """
 
 import torch
